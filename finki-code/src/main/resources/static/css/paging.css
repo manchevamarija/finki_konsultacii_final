@@ -1,0 +1,21 @@
+@media (max-width: 768px) {
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .pagination .page-item {
+        margin-bottom: 10px;
+    }
+
+    .results-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .results-container select,
+    .results-container span,
+    .results-container b {
+        margin-bottom: 10px;
+    }
+}

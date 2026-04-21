@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Consultation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    <style>
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .header-gradient {
+            border-radius: 12px 12px 0 0;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container my-4">
+        <button onclick="goBack()" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i>Назад
+        </button>
+
+        <div class="mb-4">
+            <div class="d-flex align-items-start text-muted">
+                <i class="fas fa-info-circle me-2 mt-1"></i>
+                <span>Доколку направите промена на терминот, студентите кои се пријавени за истиот ќе бидат известени за промената по маил.</span>
+            </div>
+        </div>
+
+        <div th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+             class="alert alert-danger d-flex align-items-center shadow-sm mb-3" role="alert">
+            <i class="fas fa-exclamation-circle me-2 fs-5"></i>
+            <span th:text="${errorMessage}" class="fw-bold"></span>
+        </div>
+        <div th:if="${successMessage != null and !#strings.isEmpty(successMessage)}"
+             class="alert alert-success d-flex align-items-center shadow-sm mb-3" role="alert">
+            <i class="fas fa-check-circle me-2 fs-5"></i>
+            <span th:text="${successMessage}" class="fw-bold"></span>
+        </div>
+
+        <div class="form-card mb-4">
+            <div class="header-gradient bg-light p-4">
+                <h4 class="mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>Промени термин
+                </h4>
+            </div>
+            <div class="p-4">
+                <form id="editConsultationForm" method="post"
+                      th:action="@{'/manage-consultations/' + ${professorId} + '/update-consultation/' + ${consultation.id}}"
+                >
+                    <input type="hidden" name="editAllUpcoming" id="editAllUpcomingField" value="false">
+
+
+                    <input type="hidden" name="professorId" th:value="${professorId}"/>
+                    <input type="hidden" name="regularConsultationId" class="regular-consultations-inputs-ids"
+                           th:value="${consultation.id}">
+
+                    <div th:if="${consultation.type.name() == 'WEEKLY'}" class="row g-3 mb-4">
+                        <div class="col-12">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="editType" id="editSingle" value="single" checked>
+                                <label class="btn btn-outline-secondary" for="editSingle">
+                                    <i class="fas fa-calendar-day me-2"></i>Само овој термин
+                                </label>
+
+                                <input type="radio" class="btn-check" name="editType" id="editAllUpcoming" value="all">
+                                <label class="btn btn-outline-secondary" for="editAllUpcoming">
+                                    <i class="fas fa-calendar-week me-2"></i>Сите наредни термини
+                                </label>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="editHintText">Промената ќе се примени само на овој термин</span>
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4" id="dayOfWeekGroup" style="display: none;">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-calendar-alt text-primary-custom me-2"></i>Ден од неделата
+                            </label>
+                            <select name="dayOfWeek" class="form-select" id="dayOfWeekSelect">
+                                <option disabled selected value="">Избери ден</option>
+                                <option value="MONDAY" th:selected="${consultation.dayOfWeek.name() == 'MONDAY'}">Понеделник</option>
+                                <option value="TUESDAY" th:selected="${consultation.dayOfWeek.name() == 'TUESDAY'}">Вторник</option>
+                                <option value="WEDNESDAY" th:selected="${consultation.dayOfWeek.name() == 'WEDNESDAY'}">Среда</option>
+                                <option value="THURSDAY" th:selected="${consultation.dayOfWeek.name() == 'THURSDAY'}">Четврток</option>
+                                <option value="FRIDAY" th:selected="${consultation.dayOfWeek.name() == 'FRIDAY'}">Петок</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4" id="dateGroup">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-calendar text-primary-custom me-2"></i>Датум
+                            </label>
+                            <input type="date" name="date" class="form-control" id="dateInput"
+                                   th:value="${consultation.oneTimeDate}" th:min="${minDate}"/>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Време од
+                            </label>
+                            <input type="time" name="startTime" class="form-control" id="startTimeInput"
+                                   th:value="${consultation.startTime}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Време до
+                            </label>
+                            <input type="time" name="endTime" class="form-control" id="endTimeInput"
+                                   th:value="${consultation.endTime}" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-door-open text-primary-custom me-2"></i>Просторија
+                            </label>
+                            <select name="roomName" class="form-select" required>
+                                <option disabled selected value="">Избери просторија</option>
+                                <option th:each="room : ${rooms}" th:value="${room.name}" th:text="${room.name}"
+                                        th:selected="${room.name.equals(consultation.room.name)}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="online" class="form-check-input"
+                                       id="onlineCheckbox" th:checked="${consultation.online}"
+                                       style="width: 3rem; height: 1.5rem; cursor: pointer;"/>
+                                <label class="form-check-label ms-2 fw-semibold" for="onlineCheckbox">
+                                    Online
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-link text-primary-custom me-2"></i>Линк
+                            </label>
+                            <textarea name="meetingLink" class="form-control" rows="2"
+                                      placeholder=""
+                                      th:text="${consultation.meetingLink}"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-clipboard-list text-primary-custom me-2"></i>Инструкции за студентите
+                        </label>
+                        <textarea name="studentInstructions" class="form-control" rows="2"
+                                  placeholder="Опционални инструкции за студентите..."
+                                  th:text="${consultation.studentInstructions}"></textarea>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary-custom btn-md px-4">
+                            <span id="submitButtonText">Зачувај промени</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const editSingleRadio = document.getElementById('editSingle');
+            const editAllUpcomingRadio = document.getElementById('editAllUpcoming');
+            const editAllUpcomingField = document.getElementById('editAllUpcomingField');
+            const dayOfWeekGroup = document.getElementById('dayOfWeekGroup');
+            const dateGroup = document.getElementById('dateGroup');
+            const dayOfWeekSelect = document.getElementById('dayOfWeekSelect');
+            const dateInput = document.getElementById('dateInput');
+            const editHintText = document.getElementById('editHintText');
+            const submitButtonText = document.getElementById('submitButtonText');
+
+            const isWeekly = /*[[${consultation.type.name() == 'WEEKLY'}]]*/ false;
+
+            function updateFormFields() {
+                if (!isWeekly) return;
+
+                if (editAllUpcomingRadio && editAllUpcomingRadio.checked) {
+                    if (editAllUpcomingField) editAllUpcomingField.value = 'true';
+
+                    if (dayOfWeekGroup) dayOfWeekGroup.style.display = 'block';
+                    if (dateGroup) dateGroup.style.display = 'none';
+                    if (editHintText) editHintText.textContent = 'Промената ќе се примени на сите идни консултации од овој редовен термин';
+                    if (submitButtonText) submitButtonText.textContent = 'Зачувај за сите наредни';
+                    if (dayOfWeekSelect) dayOfWeekSelect.required = true;
+                    if (dateInput) dateInput.required = false;
+                } else {
+                    if (editAllUpcomingField) editAllUpcomingField.value = 'false';
+
+                    if (dayOfWeekGroup) dayOfWeekGroup.style.display = 'none';
+                    if (dateGroup) dateGroup.style.display = 'block';
+                    if (editHintText) editHintText.textContent = 'Промената ќе се примени само на овој термин';
+                    if (submitButtonText) submitButtonText.textContent = 'Зачувај промени';
+                    if (dayOfWeekSelect) dayOfWeekSelect.required = false;
+                    if (dateInput) dateInput.required = true;
+                }
+            }
+
+            if (editSingleRadio) {
+                editSingleRadio.addEventListener('change', updateFormFields);
+            }
+
+            if (editAllUpcomingRadio) {
+                editAllUpcomingRadio.addEventListener('change', updateFormFields);
+            }
+
+            updateFormFields();
+        });
+    </script>
+</div>
+</body>
+</html>

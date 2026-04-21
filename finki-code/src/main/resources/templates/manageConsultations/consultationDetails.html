@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="mk" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}"
+      xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Consultation Details</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+    <link th:href="@{/css/consultationDetails.css}" rel="stylesheet">
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container mt-4 mb-5">
+        <button onclick="goBack()" class="btn btn-outline-secondary mb-3">
+            <i class="fas fa-arrow-left me-2"></i>Назад
+        </button>
+
+        <div th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+             class="alert alert-danger d-flex align-items-center shadow-sm" role="alert">
+            <i class="fas fa-exclamation-circle me-2 fs-5"></i>
+            <span th:text="${errorMessage}" class="fw-bold"></span>
+        </div>
+        <div th:if="${successMessage != null and !#strings.isEmpty(successMessage)}"
+             class="alert alert-success d-flex align-items-center shadow-sm" role="alert">
+            <i class="fas fa-check-circle me-2 fs-5"></i>
+            <span th:text="${successMessage}" class="fw-bold"></span>
+        </div>
+
+        <h2 class="mb-2">
+            <i class="fas fa-calendar-check text-primary-custom me-2"></i>Детали за консултации
+        </h2>
+
+        <div class="row g-4 mb-2 mt-2">
+            <div class="col-lg-3">
+                <div class="info-card">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar"></i>Датум
+                        </div>
+                        <div class="info-value">
+                            <span th:text="${consultation.getFormattedOneTimeDate()} + ' (' + #{${consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-clock"></i>Време
+                        </div>
+                        <div class="info-value">
+                            <span th:text="${consultation.startTime} + ' - ' + ${consultation.endTime}"></span>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-tag"></i>Тип
+                        </div>
+                        <div class="info-value">
+                            <span th:if="${consultation.getType().name() == 'WEEKLY'}">
+                        <span th:text="${consultation.getTranslatedType()}"></span>
+                    </span>
+                            <span th:if="${consultation.getType().name() == 'ONE_TIME'}"
+                            >
+                        <span th:text="${consultation.getTranslatedType()}"></span>
+                    </span>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-door-open"></i>Просторија
+                        </div>
+                        <div class="info-value">
+                            <span th:text="${consultation.room.name}"></span>
+                            <span th:if="${consultation.online}" class=""> и Онлајн</span>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-link"></i>Линк
+                        </div>
+                        <div class="info-value">
+                            <div th:if="${consultation.meetingLink != null && !#strings.isEmpty(consultation.meetingLink)}">
+                                <a th:href="${consultation.meetingLink}"
+                                   th:text="${#strings.abbreviate(consultation.meetingLink, 50)}"
+                                   target="_blank"
+                                   th:title="${consultation.meetingLink}"></a>
+                            </div>
+                            <div th:if="${consultation.meetingLink == null or #strings.isEmpty(consultation.meetingLink)}">
+                                <span> N/A</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-clipboard-list"></i>Инструкции
+                        </div>
+                        <div class="info-value">
+                            <div th:if="${consultation.studentInstructions != null && !#strings.isEmpty(consultation.studentInstructions)}"
+                                 class="bg-light p-3 rounded border">
+                                <span th:text="${consultation.studentInstructions}"></span>
+                            </div>
+                            <div th:if="${consultation.studentInstructions == null or #strings.isEmpty(consultation.studentInstructions)}"
+                                 class="bg-light p-3 rounded border">
+                                <span> N/A</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-toggle-on"></i>Статус
+                        </div>
+                        <div class="info-value">
+                            <span class="badge bg-success-custom  fs-6"
+                                  th:text="${consultation.getStatus().name()}"></span>
+                        </div>
+                    </div>
+
+                    <div th:unless="${consultation.isEnded()}" class="mt-4">
+                        <form th:action="@{'/manage-consultations/' + ${professorId} + '/edit-consultation/' + ${consultation.id}}"
+                              method="get">
+                            <button class="btn btn-warning-custom btn-action" type="submit">
+                                <i class="fas fa-edit me-2"></i>Промени
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-9">
+                <div class="info-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+                        <h4 class="mb-0">
+                            <i class="fas fa-users me-2 text-primary-custom"></i>Пријавени студенти
+                        </h4>
+                        <span class="stats-badge mt-2 mt-md-0">
+                    <i class="fas fa-user-check"></i>
+                    Вкупно: <strong class="ms-2" th:text="${attendanceCount}">0</strong>
+                </span>
+                    </div>
+
+                    <div th:unless="${consultation.isEnded() || attendees == null || #lists.isEmpty(attendees)}"
+                         class="mb-4">
+                        <form th:action="@{'/manage-consultations/' + ${professorId} + '/consultation-details/' + ${consultation.id} + '/add-comment-all'}"
+                              method="post">
+
+                            <input type="hidden" name="consultationId" th:value="${consultation.id}"/>
+
+                            <div class="mb-2">
+                        <textarea name="newComment" class="form-control"
+                                  required
+                                  placeholder="Напиши коментар за сите пријавени студенти..."
+                                  maxlength="500" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom btn-action">
+                                <i class="fas fa-comment-medical me-2"></i>Додај коментар на сите
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:if="${attendees != null && !#lists.isEmpty(attendees)}">
+                        <div class="student-card" th:each="attendee : ${attendees}">
+                            <div class="student-name">
+                                <span th:text="${attendee.attendee.name + ' ' + attendee.attendee.lastName}"></span>
+                                <span class="badge bg-secondary ms-2" th:text="${attendee.attendee.index}"></span>
+                            </div>
+
+                            <div th:replace="~{fragments/comments :: commentsBlock(${attendee.comments})}"></div>
+
+                            <div th:unless="${attendee.consultation.isEnded()}">
+                                <form action="/consultations/add-comment" method="post" class="mt-3 mobile-comment-form">
+
+                                    <input type="hidden" name="attendanceId" th:value="${attendee.id}"/>
+                                    <input type="hidden" name="professorId"
+                                           th:value="${attendee.consultation.professor.id}"/>
+                                    <input type="hidden" name="consultationId" th:value="${attendee.consultation.id}"/>
+
+                                    <div class="input-group">
+                                <textarea name="newComment" class="form-control"
+                                          required
+                                          placeholder="Додај коментар за овој студент..."
+                                          maxlength="500" rows="3"></textarea>
+                                        <button type="submit" class="btn btn-primary-custom">
+                                            <i class="fas fa-plus me-1"></i>Додај
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${attendees == null || #lists.isEmpty(attendees)}" class="text-center py-5">
+                        <i class="fas fa-users-slash fs-1 text-muted mb-3"></i>
+                        <p class="text-muted">Нема пријавени студенти за овој термин.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+</body>
+</html>

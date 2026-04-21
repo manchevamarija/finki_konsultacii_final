@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="en">
+<head>
+    <meta charset="UTF-8" content="no-cache">
+    <title>FINKI Consultations</title>
+    <style>
+        .card-style {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 10px;
+            background: rgba(231, 231, 231, 0.53);
+        }
+
+        .card-style:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15),
+            0 6px 6px rgba(0, 0, 0, 0.10);
+        }
+
+        .card-style:hover .card-header-font {
+            white-space: normal;
+        }
+
+        .edit-link {
+            transition: text-shadow 0.3s ease;
+        }
+
+        .edit-link:hover {
+            text-shadow: 1px 1px 1px #E68A00;
+        }
+
+        .consultation-link {
+            transition: text-shadow 0.3s ease;
+        }
+
+        .consultation-link:hover {
+            text-shadow: 1px 1px 1px #0056b3;
+        }
+
+        @media (max-width: 576px) {
+            .card-style {
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+<div class="mt-4" layout:fragment="content">
+    <th:block xmlns:th="http://www.thymeleaf.org"
+              xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+        <th:block sec:authorize="hasAnyRole('ROLE_STUDENT')">
+            <div th:insert="~{bookedConsultations}"></div>
+        </th:block>
+
+
+        <div class="container" id="consultations-cards" style="margin-top: 2rem">
+            <form th:action="${isAuthenticated ? '/consultations' : '/'}"  method="get">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <input type="text" class="form-control" name="professor"
+                               placeholder="Пребарај консултации по професор" th:value="${param.professor}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button type="submit" class="btn btn-primary-custom">
+                            <i class="fas fa-search me-2"></i> Пребарај</button>
+                    </div>
+                </div>
+            </form>
+            <div class="row mb-4" th:each="entry : ${professorsMap}">
+                <h4 class="mb-2 card-header-font" th:text="${entry.key}"></h4>
+                <div th:each="professor : ${entry.value}"
+                     class="col-xl-3 col-sm-6 mb-3 mx-2 shadow-sm py-2 px-3 float-left card-style">
+                    <h5 th:text="${professor.getName()}" class="mb-0 card-header-font"></h5>
+                    <a th:id="${professor.getId()}"
+                       th:href="${isAuthenticated ? (isStudent ? '/consultations/student/professor/' + professor.getId() : '/consultations/professor/' + professor.getId()) :
+                            '/display/' + professor.getId()}"
+                       class="text-decoration-none mt-4 consultation-link">
+                        Консултации
+                    </a>
+
+                    <div sec:authorize="hasRole('ROLE_ADMIN')">
+                        <a th:id="'edit-' + ${professor.getId()}"
+                           th:href="@{/manage-consultations/{id}(id=${professor.getId()})}"
+                           class="text-decoration-none edit-link" style="color: #FFB300;">Промени</a>
+                    </div>
+                    <div sec:authorize="hasRole('ROLE_PROFESSOR')">
+                        <th:block th:if="${professor.getId()} == ${username}">
+                            <a th:id="'edit-' + ${professor.getId()}"
+                               th:href="@{/manage-consultations/{id}(id=${professor.getId()})}"
+                               class="text-decoration-none edit-link" style="color: #FFB300;">Промени</a>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</div>
+</body>
+</html>

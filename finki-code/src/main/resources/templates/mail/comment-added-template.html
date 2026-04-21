@@ -1,0 +1,148 @@
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="mk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Нова забелешка за консултации</title>
+    <!--[if mso]>
+    <style type="text/css">
+        table, td {border-collapse: collapse;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif;">
+
+<span style="display:none;font-size:1px;color:#f4f4f4;max-height:0px;overflow:hidden;">
+    <th:block th:text="${name}">Име</th:block> додаде нова забелешка за консултации на <th:block th:text="${date}">датум</th:block>
+</span>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4;">
+    <tr>
+        <td align="center" style="padding: 40px 20px;">
+
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="background-color: #ffffff; border-radius: 8px; max-width: 600px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+
+<!--                <tr>-->
+<!--                    <td style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">-->
+<!--                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">-->
+<!--                            <tr>-->
+<!--                                <td align="center">-->
+<!--                                    <img src="cid:logo"-->
+<!--                                         alt="ФИНКИ Лого"-->
+<!--                                         style="width: 70px; height: 70px; border-radius: 50%; margin-bottom: 15px; background-color: rgba(255,255,255,0.2); padding: 5px;">-->
+<!--                                    <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold; letter-spacing: 1px;">Консултации</h1>-->
+<!--                                    <p style="margin: 8px 0 0; color: rgba(255,255,255,0.8); font-size: 14px;">Систем за консултации</p>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </table>-->
+<!--                    </td>-->
+<!--                </tr>-->
+
+                <tr>
+                    <td style="padding: 40px 30px;">
+                        <p style="margin: 0 0 20px; font-size: 18px; line-height: 1.6; color: #333333;">
+                            Почитуван/а,
+                        </p>
+
+                        <p style="margin: 0 0 25px; font-size: 18px; line-height: 1.6; color: #333333;">
+                            <strong th:text="${name}" style="color: #007bff;">Име</strong>
+                            додаде нов коментар за консултациите на следниот термин:
+                        </p>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="background-color: #f8f9fa; border-left: 4px solid #007bff; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                            <tr>
+                                <td style="padding: 25px;">
+                                    <p style="margin: 0 0 15px; font-size: 14px; color: #666666;">
+                                        <strong style="color: #333333; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Датум</strong><br>
+                                        <span th:text="${date} + ' (' + ${dayOfWeek} + ')'" style="font-size: 18px; color: #007bff; font-weight: bold; line-height: 1.4;">
+                                            01.01.2025
+                                        </span>
+                                    </p>
+
+                                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 15px 0;">
+
+                                    <p style="margin: 0 0 15px; font-size: 14px; color: #666666;">
+                                        <strong style="color: #333333; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Време</strong><br>
+                                        <span style="font-size: 16px; color: #007bff; font-weight: bold; line-height: 1.4;">
+                                            <span th:text="${startTime}">10:00</span> - <span th:text="${endTime}">11:00</span>
+                                        </span>
+                                    </p>
+
+                                    <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 15px 0;">
+
+                                    <p style="margin: 0; font-size: 14px; color: #666666;">
+                                        <strong style="color: #333333; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Просторија</strong><br>
+                                        <span th:text="${room}" style="font-size: 16px; color: #007bff; font-weight: bold; line-height: 1.4;">
+                                            114
+                                        </span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="background-color: #fff8e6; border-left: 4px solid #ffc107; margin: 25px 0; border-radius: 0 8px 8px 0;">
+                            <tr>
+                                <td style="padding: 25px;">
+                                    <p style="margin: 0; font-size: 14px; color: #666666;">
+                                        <strong style="color: #333333; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Коментар</strong><br>
+                                        <span th:text="${newComment}" style="color: #555555; line-height: 1.6; display: block; margin-top: 8px; font-weight: bold; font-size: 18px;">
+                                            Содржина на коментар
+                                        </span>
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+
+
+                        <p th:if="${studentEmail != null and !studentEmail.isEmpty()}"
+                           style="margin: 0 0 25px; font-size: 16px; line-height: 1.6; color: #666666;">
+                            <strong style="color: #333333; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;">Е-маил</strong><br>
+                            <a th:href="'mailto:' + ${studentEmail}" th:text="${studentEmail}"
+                               style="color: #007bff; font-weight: 500; text-decoration: none;">student@example.com</a>
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background-color: #f8f9fa; padding: 25px 30px; border-radius: 0 0 8px 8px;
+                               border-top: 1px solid #eeeeee;">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="center">
+                                    <p style="margin: 0 0 10px; font-size: 12px; color: #999999; line-height: 1.5;">
+                                        Оваа порака е автоматски испратена преку системот
+                                        <a th:href="${baseUrl}" style="color: #007bff; text-decoration: none; font-weight: bold;">Консултации</a>.
+                                    </p>
+                                    <p style="margin: 0; font-size: 11px; color: #bbbbbb;">
+                                        Ве молиме не одговарајте на оваа порака.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px;">
+                <tr>
+                    <td align="center" style="padding: 25px 20px;">
+                        <p style="margin: 0; font-size: 11px; color: #999999;">
+                            © 2026 ФИНКИ - Факултет за информатички науки и компјутерско инженерство
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

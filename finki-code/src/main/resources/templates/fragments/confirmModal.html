@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Confirm Modal Fragment</title>
+</head>
+<body>
+
+<div th:fragment="confirmModal" class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Потврди акција</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="confirmModalMessage">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Не</button>
+                <button type="button" class="btn btn-danger" id="confirmModalBtn">Да</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:fragment="confirmModalScript">
+    function confirmAction(form, message, btnClass = 'btn-danger') {
+        document.getElementById('confirmModalMessage').innerHTML = message;
+
+        const confirmBtn = document.getElementById('confirmModalBtn');
+        confirmBtn.className = 'btn ' + btnClass;
+
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        newConfirmBtn.addEventListener('click', function() {
+            modal.hide();
+            form.submit();
+        });
+
+        return false;
+    }
+</script>
+
+</body>
+</html>

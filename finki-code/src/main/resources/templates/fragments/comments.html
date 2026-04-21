@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Full block: handles empty + non-empty -->
+<div th:fragment="commentsBlock(comments)">
+
+  <!-- When comments exist -->
+  <div th:if="${!#lists.isEmpty(comments)}"
+       class="bg-light p-2 rounded border">
+
+    <div th:each="comment : ${comments}" class="comment-item">
+      ---<br/>
+      <strong th:text="${comment.authorInitials}">AB</strong>
+      [
+      <span th:text="${#temporals.format(comment.timestamp, 'dd.MM.yyyy HH:mm')}">
+        2024-01-01 12:00
+      </span>
+      ]
+      <span th:text="${comment.text}">Comment text</span>
+    </div>
+  </div>
+
+  <!-- When empty -->
+  <span class="text-muted" th:if="${#lists.isEmpty(comments)}">-</span>
+
+</div>
+
+</body>
+</html>

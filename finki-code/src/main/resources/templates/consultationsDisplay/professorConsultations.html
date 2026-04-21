@@ -1,0 +1,178 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6"
+      layout:decorate="~{layout}" lang="en">
+<head>
+    <title>FINKI Consultations</title>
+    <style>
+        .consultation-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 100%;
+        }
+        .consultation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .consultation-icon {
+            width: 20px;
+            color: #6c757d;
+        }
+        .consultation-detail {
+            font-size: 0.9rem;
+            color: #495057;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+        }
+        .meeting-link-btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+        }
+        .section-header {
+            border-left: 4px solid #578ABD;
+            padding-left: 12px;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<div class="mt-4" layout:fragment="content">
+    <th:block xmlns:th="http://www.thymeleaf.org">
+        <div class="container-lg mt-4">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user-tie fa-2x text-primary-custom me-3"></i>
+                        <h2 class="mb-0" th:text="${professor.name}"></h2>
+                    </div>
+                </div>
+            </div>
+
+            <div id="consultations">
+                <div th:unless="${#lists.isEmpty(irregularPage.getContent())}" class="mb-5">
+                    <div class="section-header">
+                        <h4 class="mb-0">Дополнителни консултации</h4>
+                    </div>
+                    <div class="row g-4">
+                        <div th:each="consultation : ${irregularPage.getContent()}"
+                             class="col-lg-4 col-md-6 col-sm-12">
+                            <div class="card consultation-card">
+                                <div class="card-body">
+                                   <div class="d-flex align-items-center mb-2">
+                                            <h6
+                                                  th:text="${consultation.getFormattedOneTimeDate()} + ' (' + #{${consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></h6>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-clock consultation-icon me-3"></i>
+                                            <span class="consultation-detail"
+                                                  th:text="${consultation.startTime} + ' - ' + ${consultation.endTime}"></span>
+                                        </div>
+
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-map-marker-alt consultation-icon me-3"></i>
+                                        <span class="consultation-detail"
+                                              th:text="${consultation.room.type == 'VIRTUAL' ? 'Online' : consultation.room.name + (consultation.online != null and consultation.online ? ', Онлајн' : '')}"></span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-users consultation-icon me-3"></i>
+                                        <span class="consultation-detail">
+                                            <span th:text="${consultation.attendanceCount}"></span>
+                                            пријавени студенти
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3" th:if="${consultation.meetingLink != null && !#strings.isEmpty(consultation.meetingLink)}">
+                                        <i class="fas fa-link consultation-icon me-3"></i>
+                                        <span class="consultation-detail">
+                                            <a th:href="${consultation.meetingLink}"
+                                               th:text="${#strings.abbreviate(consultation.meetingLink, 50)}"
+                                               target="_blank"
+                                               th:title="${consultation.meetingLink}"></a>
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div th:if="${consultation.studentInstructions != null && !#strings.isEmpty(consultation.studentInstructions)}"
+                                             class="bg-light p-3 rounded border w-100">
+                                            <span th:text="${consultation.studentInstructions}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(irregularPage.getContent())}"
+                         th:insert="~{fragments/irregularPaging :: pageSection(${irregularPage})}"
+                         class="mt-4"></div>
+                </div>
+
+                <div th:unless="${#lists.isEmpty(regularPage.getContent())}" class="mb-5">
+                    <div class="section-header">
+                        <h4 class="mb-0">Редовни консултации</h4>
+                    </div>
+                    <div class="row g-4">
+                        <div th:each="consultation : ${regularPage.getContent()}"
+                             class="col-lg-4 col-md-6 col-sm-12">
+                            <div class="card consultation-card">
+                                <div class="card-body">
+
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h6 th:text="${consultation.getFormattedOneTimeDate()} + ' (' + #{${consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></h6>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-clock consultation-icon me-3"></i>
+                                            <span class="consultation-detail"
+                                                  th:text="${consultation.startTime} + ' - ' + ${consultation.endTime}"></span>
+                                        </div>
+
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-map-marker-alt consultation-icon me-3"></i>
+                                        <span class="consultation-detail"
+                                              th:text="${consultation.room.type == 'VIRTUAL' ? 'Online' : consultation.room.name + (consultation.online != null and consultation.online ? ', Онлајн' : '')}"></span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="fas fa-users consultation-icon me-3"></i>
+                                        <span class="consultation-detail">
+                                            <span th:text="${consultation.attendanceCount}"></span>
+                                            пријавени студенти
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3" th:if="${consultation.meetingLink != null && !#strings.isEmpty(consultation.meetingLink)}">
+                                        <i class="fas fa-link consultation-icon me-3"></i>
+                                        <span class="consultation-detail">
+                                            <a th:href="${consultation.meetingLink}"
+                                               th:text="${#strings.abbreviate(consultation.meetingLink, 50)}"
+                                               target="_blank"
+                                               th:title="${consultation.meetingLink}"></a>
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex align-items-center mb-3" >
+                                        <div th:if="${consultation.studentInstructions != null && !#strings.isEmpty(consultation.studentInstructions)}"
+                                             class="bg-light p-3 rounded border w-100">
+                                            <span th:text="${consultation.studentInstructions}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:unless="${#lists.isEmpty(regularPage.getContent())}"
+                         th:insert="~{fragments/regularPaging :: pageSection(${regularPage})}"
+                         class="mt-4"></div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(regularPage.getContent()) and #lists.isEmpty(irregularPage.getContent())}"
+                     class="text-center py-5">
+                    <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Моментално нема закажани консултации. Ве молиме контактирајте го професорот по е-пошта за да договорите термин.</h5>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</div>
+</html>

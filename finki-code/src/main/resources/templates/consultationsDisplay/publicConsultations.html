@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Консултации</title>
+</head>
+<body>
+<div>
+    <header>
+        <h2 th:text="${professor.name}"></h2>
+        <hr/>
+    </header>
+
+    <section id="consultations">
+        <div th:unless="${#lists.isEmpty(irregularConsultationTerms)}">
+            <h2>Дополнителни консултации</h2>
+            <table cellpadding="10">
+                <thead>
+                <tr>
+                    <th>Датум</th>
+                    <th>Време</th>
+                    <th>Просторија</th>
+                    <th>Инструкции</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="consultation : ${irregularConsultationTerms}">
+                    <td th:text="${consultation.getFormattedOneTimeDate()} + ' (' + #{${consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></td>
+                    <td th:text="${consultation.startTime} + ' - ' + ${consultation.endTime}"></td>
+                    <td th:text="${consultation.room.name + (consultation.online != null ? (consultation.online ? ', Online' : '') : '')}"></td>
+                    <td th:text="${consultation.studentInstructions != null ? consultation.studentInstructions : ''}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(regularConsultationTerms)}">
+            <h2>Редовни консултации</h2>
+            <table cellpadding="10">
+                <thead>
+                <tr>
+                    <th>Датум</th>
+                    <th>Време</th>
+                    <th>Просторија</th>
+                    <th>Инструкции</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="consultation : ${regularConsultationTerms}">
+                    <td th:text="${consultation.getFormattedOneTimeDate()} + ' (' + #{${consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></td>
+                    <td th:text="${consultation.startTime} + ' - ' + ${consultation.endTime}"></td>
+                    <td th:text="${consultation.room.name + (consultation.online != null ? (consultation.online ? ', Online' : '') : '')}"></td>
+                    <td th:text="${consultation.studentInstructions != null ? consultation.studentInstructions : ''}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${#lists.isEmpty(regularConsultationTerms) and #lists.isEmpty(irregularConsultationTerms)}">
+            Нема закажани консултации во наредните 6 дена.
+        </div>
+
+        <hr/>
+
+        <p th:unless="${#lists.isEmpty(regularConsultationTerms) and #lists.isEmpty(irregularConsultationTerms)}">
+            <a class="nav-link" href="/consultations">
+                Најавете се</a> за да се пријавите на консултациите.
+        </p>
+
+        <p th:if="${#lists.isEmpty(regularConsultationTerms) and #lists.isEmpty(irregularConsultationTerms)}">
+            <a class="nav-link" href="/consultations">
+                Најавете се</a> за да ги видите сите термини за консултации.
+        </p>
+
+    </section>
+</div>
+</body>
+</html>

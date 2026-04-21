@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="mk" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}"
+      xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINKI Consultations</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .table tbody tr {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            transition: transform 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .mobile-card-view {
+            display: none;
+        }
+
+        .desktop-table-view {
+            display: block;
+        }
+
+        .badge-custom {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-card-view {
+                display: block;
+            }
+
+            .desktop-table-view {
+                display: none;
+            }
+
+            .consultation-card {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                overflow: hidden;
+            }
+
+            .consultation-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .card-header-custom {
+                /*background: linear-gradient(135deg, #668bea 0%, #4b64a2 100%);*/
+                color: white;
+                padding: 1rem;
+            }
+
+            .card-info-row {
+                display: flex;
+                align-items: flex-start;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid #f0f0f0;
+            }
+
+            .card-info-row:last-of-type {
+                border-bottom: none;
+            }
+
+            .card-info-label {
+                font-weight: 600;
+                color: #6c757d;
+                min-width: 110px;
+                font-size: 0.9rem;
+            }
+
+            .card-info-value {
+                flex: 1;
+            }
+
+            .card-actions {
+                padding: 1rem;
+                background-color: #f8f9fa;
+            }
+        }
+    </style>
+    <script th:replace="~{fragments/confirmModal :: confirmModalScript}"></script>
+</head>
+<body>
+<div layout:fragment="content">
+    <div th:replace="~{fragments/confirmModal :: confirmModal}"></div>
+
+    <div class="container mt-4 mb-5">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-calendar-check  fs-3 me-3"></i>
+            <h4 class="mb-0">Мои пријавени консултации</h4>
+        </div>
+
+        <div class="card shadow-sm p-0 mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Филтри
+                </h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/student-attendances}" method="get">
+                    <div class="row g-3">
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag text-primary-custom me-2"></i>Тип на консултации
+                            </label>
+                            <select class="form-select" name="type">
+                                <option value="">Сите типови</option>
+                                <option value="WEEKLY" th:selected="${param.type!=null && 'WEEKLY' == param.type[0]}">
+                                    <i class="fas fa-redo"></i> Редовни
+                                </option>
+                                <option value="ONE_TIME" th:selected="${param.type!=null && 'ONE_TIME' == param.type[0]}">
+                                    <i class="fas fa-star"></i> Дополнителни
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Временски период
+                            </label>
+                            <select class="form-select" name="time">
+                                <option value="ALL">Сите</option>
+                                <option value="PAST" th:selected="${param.time!=null && 'PAST' == param.time[0]}">
+                                    Завршени
+                                </option>
+                                <option value="UPCOMING" th:selected="${param.time!=null && 'UPCOMING' == param.time[0]}">
+                                    Идни
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-custom w-100">
+                                <i class="fas fa-search me-2"></i>Филтрирај
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="desktop-table-view" th:if="${!page.isEmpty()}">
+            <div class="card shadow-sm p-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive rounded-3">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th class="col-auto px-4 py-3">
+                                    <i class="fas fa-calendar me-2"></i>Ден
+                                </th>
+                                <th class="col-auto px-4 py-3">
+                                    <i class="fas fa-clock me-2"></i>Време
+                                </th>
+                                <th class="col-auto px-4 py-3">
+                                    <i class="fas fa-door-open me-2"></i>Просторија
+                                </th>
+                                <th class="col-auto px-4 py-3">
+                                    <i class="fas fa-tag me-2"></i>Тип
+                                </th>
+                                <th class="col-auto px-4 py-3">
+                                    <i class="fas fa-user-tie me-2"></i>Професор
+                                </th>
+                                <th class="col-2 px-4 py-3">
+                                    <i class="fas fa-comment me-2"></i>Коментар
+                                </th>
+                                <th class="col-3 px-4 py-3">
+                                    <i class="fas fa-cog me-2"></i>Акции
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="attendance : ${page.getContent()}">
+                                <td class="col-auto px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <span th:text="${attendance.consultation.getFormattedOneTimeDate()}+ ' (' + #{${attendance.consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                                    </div>
+                                </td>
+                                <td class="col-auto px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <span th:text="${attendance.consultation.startTime} + ' - ' + ${attendance.consultation.endTime}"></span>
+                                    </div>
+                                </td>
+                                <td class="col-auto px-4 py-3">
+                                    <th:block th:unless="${attendance.consultation.online==null}">
+                                        <div class="d-flex align-items-center">
+                                            <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-info-custom">
+                                                    Online
+                                                </span>
+                                            <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}">
+                                                    <span th:text="${attendance.consultation.room.name}"></span>
+                                                    <span th:if="${attendance.consultation.online}" class="">
+                                                        и Онлајн
+                                                    </span>
+                                                </span>
+                                        </div>
+                                    </th:block>
+                                    <th:block th:if="${attendance.consultation.online==null}">
+                                        <div class="d-flex align-items-center">
+                                            <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-success-custom ">
+                                                    <i class="fas fa-wifi me-1"></i>Online
+                                                </span>
+                                            <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}" th:text="${attendance.consultation.room.name}"></span>
+                                        </div>
+                                    </th:block>
+                                </td>
+                                <td class="col-auto px-4 py-3">
+                                        <span th:if="${attendance.consultation.getType().toString() == 'WEEKLY'}" class="badge bg-success-custom  badge-custom">
+                                        <span th:text="${attendance.consultation.getTranslatedType()}"></span>
+                                    </span>
+                                    <span th:if="${attendance.consultation.getType().toString() == 'ONE_TIME'}" class="badge bg-warning-custom text-dark badge-custom">
+                                        <span th:text="${attendance.consultation.getTranslatedType()}"></span>
+                                    </span>
+                                </td>
+                                <td class="col-auto  px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <span class="fw-semibold" th:text="${attendance.consultation.professor.name}"></span>
+                                    </div>
+                                </td>
+                                <td class="col-4  px-4 py-3">
+                                    <div th:replace="~{fragments/comments :: commentsBlock(${attendance.comments})}"></div>
+                                </td>
+                                <td class="col-3  px-4 py-3">
+                                    <div th:if="${!attendance.consultation.isActive() and attendance.consultation!=null}">
+                                            <span class="p-2">
+                                                <i class="fas fa-ban me-1 text-danger"></i>Консултациите се <strong>откажани</strong>
+                                            </span>
+                                    </div>
+
+                                    <div th:unless="${attendance.consultation.isEnded() || attendance.consultation.isActive() == false}" class="d-grid gap-2">
+                                        <form action="/consultations/add-comment" method="post">
+
+                                            <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+                                            <input type="hidden" name="professorId" value=""/>
+                                            <input type="hidden" name="consultationId" value=""/>
+
+                                            <div class="input-group input-group-sm">
+                                                    <textarea name="newComment" class="form-control"
+                                                              placeholder="Коментар..." maxlength="500" rows="3"></textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary-custom btn-sm w-100 mt-2">
+                                                <i class="fas fa-plus me-1"></i>Додај коментар
+                                            </button>
+                                        </form>
+
+                                        <div th:if="${attendance.consultation.isMoreThanTwoHoursAway()}">
+                                            <form action="/student-attendances/cancel" method="post"
+                                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да го откажете присуството?')">
+
+                                                <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+                                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                    <i class="fas fa-times me-1"></i>Откажи присуство
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <div th:if="${attendance.consultation.isEnded() and attendance.consultation.isActive()}">
+                                        <div th:if="${attendance.reportAbsentProfessor}" class="mb-0">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            <strong>Го пријавивте професорот како отсутен:</strong>
+                                            <p class="mb-0 mt-1" th:text="${attendance.absentProfessorComment}"></p>
+                                        </div>
+                                        <div th:unless="${attendance.reportAbsentProfessor}">
+                                            <form th:action="@{/student-attendances/report-absent-professor}" method="post"
+                                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да пријавите отсуство на професор?')">
+                                                <input type="hidden" name="attendanceId" th:value="${attendance.id}" />
+
+
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="checkbox" name="reportAbsentProfessor"
+                                                           th:id="'reportAbsentProfessor' + ${attendance.id}">
+                                                    <label class="form-check-label" th:for="'reportAbsentProfessor' + ${attendance.id}">
+                                                        Професорот беше отсутен
+                                                    </label>
+                                                </div>
+                                                <textarea class="form-control form-control-sm mb-2" name="absentProfessorComment"
+                                                          placeholder="Остави коментар..." rows="3"></textarea>
+                                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Пријави отсутен професор
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-card-view" th:if="${!page.isEmpty()}">
+            <div class="consultation-card" th:each="attendance : ${page.getContent()}">
+                <div class="card-header-custom bg-primary-custom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div style="flex: 1;">
+                            <h6 class="mb-1">
+                                <span th:text="${attendance.consultation.professor.name}"></span>
+                            </h6>
+                        </div>
+                    </div>
+                    <p class="mb-0 small opacity-90">
+                        <i class="fas fa-calendar me-2"></i>
+                        <span th:text="${attendance.consultation.getFormattedOneTimeDate()}+ ' (' + #{${attendance.consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                    </p>
+                    <div>
+                            <span th:if="${attendance.consultation.type.name() == 'WEEKLY'}" class="badge bg-light text-dark">
+                                <span th:text="${attendance.consultation.getTranslatedType()}"></span>
+                            </span>
+                        <span th:if="${attendance.consultation.type.name() == 'ONE_TIME'}" class="badge bg-warning text-dark">
+                                <span th:text="${attendance.consultation.getTranslatedType()}"></span>
+                            </span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card-info-row">
+                        <div class="card-info-label">
+                            <i class="fas fa-clock me-2"></i>Време
+                        </div>
+                        <div class="card-info-value">
+                            <span th:text="${attendance.consultation.startTime} + ' - ' + ${attendance.consultation.endTime}"></span>
+                        </div>
+                    </div>
+
+                    <div class="card-info-row">
+                        <div class="card-info-label">
+                            <i class="fas fa-door-open me-2"></i>Просторија
+                        </div>
+                        <div class="card-info-value">
+                            <th:block th:unless="${attendance.consultation.online==null}">
+                                <div class="d-flex align-items-center">
+                                    <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-success-custom ">
+                                        Online
+                                    </span>
+                                    <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}">
+                                        <span th:text="${attendance.consultation.room.name}"></span>
+                                        <span th:if="${attendance.consultation.online}" class="">
+                                            и Онлајн
+                                        </span>
+                                    </span>
+                                </div>
+                            </th:block>
+                            <th:block th:if="${attendance.consultation.online==null}">
+                                <div class="d-flex align-items-center">
+                                    <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-success-custom ">
+                                        <i class="fas fa-wifi me-1"></i>Online
+                                    </span>
+                                    <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}" th:text="${attendance.consultation.room.name}"></span>
+                                </div>
+                            </th:block>
+                        </div>
+                    </div>
+
+                    <div class="card-info-row">
+                        <div class="card-info-value">
+                            <div th:replace="~{fragments/comments :: commentsBlock(${attendance.comments})}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <div th:if="${!attendance.consultation.isActive() and attendance.consultation!=null}">
+                        <div class="p-2 mb-0">
+                            <i class="fas fa-ban me-1 text-danger"></i>Консултациите се <strong>откажани</strong>
+                        </div>
+                    </div>
+
+                    <div th:unless="${attendance.consultation.isEnded() || attendance.consultation.isActive() == false}" class="d-grid gap-2">
+                        <form action="/consultations/add-comment" method="post">
+
+                            <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+                            <input type="hidden" name="professorId" value=""/>
+                            <input type="hidden" name="consultationId" value=""/>
+
+                            <div class="mb-2">
+                                <textarea name="newComment" class="form-control form-control-sm"
+                                          required
+                                          placeholder="Додај коментар..." maxlength="500" rows="4"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom btn-sm w-100 mb-2">
+                                <i class="fas fa-plus me-1"></i>Додај коментар
+                            </button>
+                        </form>
+
+                        <div th:if="${attendance.consultation.isMoreThanTwoHoursAway()}">
+                            <form action="/student-attendances/cancel" method="post"
+                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да го откажете присуството?')">
+
+                                <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                    <i class="fas fa-times me-1"></i>Откажи присуство
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div th:if="${attendance.consultation.isEnded() and attendance.consultation.isActive()}">
+                        <div th:if="${attendance.reportAbsentProfessor}" class="mb-0">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Го пријавивте професорот како отсутен:</strong>
+                            <p class="mb-0 mt-1" th:text="${attendance.absentProfessorComment}"></p>
+                        </div>
+                        <div th:unless="${attendance.reportAbsentProfessor}">
+                            <form th:action="@{/student-attendances/report-absent-professor}" method="post"
+                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да пријавите отсуство на професор?')">
+                                <input type="hidden" name="attendanceId" th:value="${attendance.id}" />
+
+
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="reportAbsentProfessor"
+                                           th:id="'reportAbsentProfessorMobile' + ${attendance.id}">
+                                    <label class="form-check-label" th:for="'reportAbsentProfessorMobile' + ${attendance.id}">
+                                        <i class="fas fa-user-times text-danger me-1"></i>
+                                        Професорот беше отсутен
+                                    </label>
+                                </div>
+                                <textarea class="form-control form-control-sm mb-2" name="absentProfessorComment"
+                                          required
+                                          placeholder="Остави коментар..." rows="4"></textarea>
+                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Пријави отсутен професор
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center" th:if="${page.isEmpty()}">
+            <div class="card shadow-sm p-0">
+                <div class="card-body text-center pb-2">
+                    <p class="text-muted">Нема пронајдени резултати.</p>
+                </div>
+            </div>
+        </div>
+
+        <div th:insert="~{fragments/paging :: pageSection(${page})}" class="mt-4"></div>
+    </div>
+</div>
+</body>
+</html>

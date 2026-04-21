@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="mk" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINKI Consultations</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .table tbody tr {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .mobile-card-view { display: none; }
+        .desktop-table-view { display: block; }
+
+        @media (max-width: 768px) {
+            .mobile-card-view { display: block; }
+            .desktop-table-view { display: none; }
+
+            .consultation-card {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                overflow: hidden;
+            }
+            .consultation-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+            .card-header-custom {
+                background: linear-gradient(135deg, #668bea 0%, #4b64a2 100%);
+                color: white;
+                padding: 1rem;
+            }
+            .card-info-row {
+                display: flex;
+                align-items: flex-start;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .card-info-row:last-of-type { border-bottom: none; }
+            .card-info-label {
+                font-weight: 600;
+                color: #6c757d;
+                min-width: 110px;
+                font-size: 0.9rem;
+            }
+            .card-info-value { flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container mt-4 mb-5">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-users-gear fs-3 me-3"></i>
+            <h4 class="mb-0">Сите пријавени студенти за сите термини</h4>
+        </div>
+
+        <div class="card p-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Филтри
+                </h5>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin-attendances}" method="get">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag text-primary-custom me-2"></i>Тип
+                            </label>
+                            <select class="form-select" name="type">
+                                <option value="">Сите типови</option>
+                                <option value="WEEKLY" th:selected="${param.type!=null && 'WEEKLY' == param.type[0]}">Редовни</option>
+                                <option value="ONE_TIME" th:selected="${param.type!=null && 'ONE_TIME' == param.type[0]}">Дополнителни</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Временски период
+                            </label>
+                            <select class="form-select" name="time">
+                                <option value="ALL">Сите</option>
+                                <option value="PAST" th:selected="${param.time!=null && 'PAST' == param.time[0]}">Завршени</option>
+                                <option value="UPCOMING" th:selected="${param.time!=null && 'UPCOMING' == param.time[0]}">Идни</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-user-tie text-primary-custom me-2"></i>Професор
+                            </label>
+                            <select class="form-select" name="professorId">
+                                <option value="">Сите професори</option>
+                                <option th:each="professor : ${professors}"
+                                        th:selected="${param.professorId!=null && professor.id == param.professorId[0]}"
+                                        th:value="${professor.id}" th:text="${professor.name}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-id-card text-primary-custom me-2"></i>Индекс
+                            </label>
+                            <input type="text" class="form-control" name="studentIndex"
+                                   placeholder="Пребарувај по индекс"
+                                   th:value="${param.studentIndex}">
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-user-slash text-primary-custom me-2"></i>Отсутен студент
+                            </label>
+                            <select class="form-select" name="absentStudent">
+                                <option value="">Сите</option>
+                                <option value="true" th:selected="${param.absentStudent!=null && 'true' == param.absentStudent[0]}">Да</option>
+                                <option value="false" th:selected="${param.absentStudent!=null && 'false' == param.absentStudent[0]}">Не</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-chalkboard-teacher text-primary-custom me-2"></i>Отсутен професор
+                            </label>
+                            <select class="form-select" name="absentProfessor">
+                                <option value="">Сите</option>
+                                <option value="true" th:selected="${param.absentProfessor!=null && 'true' == param.absentProfessor[0]}">Да</option>
+                                <option value="false" th:selected="${param.absentProfessor!=null && 'false' == param.absentProfessor[0]}">Не</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 col-md-12 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-custom w-100">
+                                <i class="fas fa-search me-2"></i>Филтрирај
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <div th:if="${page.isEmpty()}" class="mt-4 table-responsive shadow">
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-user-slash fa-2x mb-2"></i>
+                    <p class="mb-0">Нема пронајдени резултати.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="desktop-table-view">
+            <div th:unless="${page.isEmpty()}" class="card p-0 shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive rounded-3">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3"><i class="fas fa-calendar me-2"></i>Ден</th>
+                                <th class="px-4 py-3"><i class="fas fa-clock me-2"></i>Време</th>
+                                <th class="px-4 py-3"><i class="fas fa-door-open me-2"></i>Просторија</th>
+                                <th class="px-4 py-3"><i class="fas fa-tag me-2"></i>Тип</th>
+                                <th class="px-4 py-3"><i class="fas fa-user-tie me-2"></i>Професор</th>
+                                <th class="px-4 py-3"><i class="fas fa-user me-2"></i>Студент</th>
+                                <th class="px-4 py-3"><i class="fas fa-comment me-2"></i>Коментар</th>
+                                <th class="px-4 py-3"><i class="fas fa-user-times me-2"></i>Отсутен студент</th>
+                                <th class="px-4 py-3"><i class="fas fa-user-slash me-2"></i>Отсутен професор</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="attendance : ${page.getContent()}">
+                                <td class="px-4 py-3" th:text="${attendance.consultation.getFormattedOneTimeDate()}+ ' (' + #{${attendance.consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></td>
+                                <td class="px-4 py-3" th:text="${attendance.consultation.startTime} + ' - ' + ${attendance.consultation.endTime}"></td>
+                                <td class="px-4 py-3">
+                                    <th:block th:unless="${attendance.consultation.online==null}">
+                                        <div class="d-flex align-items-center">
+                                            <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-info-custom">
+                                                    Online
+                                                </span>
+                                            <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}">
+                                                    <span th:text="${attendance.consultation.room.name}"></span>
+                                                    <span th:if="${attendance.consultation.online}" class=""> и Онлајн
+                                                    </span>
+                                                </span>
+                                        </div>
+                                    </th:block>
+                                    <th:block th:if="${attendance.consultation.online==null}">
+                                        <div class="d-flex align-items-center">
+                                            <span th:if="${attendance.consultation.room.type == 'VIRTUAL'}" class="badge bg-success-custom ">
+                                                    <i class="fas fa-wifi me-1"></i>Online
+                                                </span>
+                                            <span th:unless="${attendance.consultation.room.type == 'VIRTUAL'}" th:text="${attendance.consultation.room.name}"></span>
+                                        </div>
+                                    </th:block>
+
+                                </td>
+                                <td class="px-4 py-3" >
+                                    <span th:if="${attendance.consultation.type.name() == 'WEEKLY'}" class="badge bg-success-custom ">Редовни</span>
+                                    <span th:if="${attendance.consultation.type.name() == 'ONE_TIME'}" class="badge bg-warning text-dark">Дополнителни</span>
+                                </td>
+                                <td class="px-4 py-3" th:text="${attendance.consultation.professor.name}"></td>
+                                <td class="px-4 py-3" th:text="${attendance.attendee.name} + ' ' + ${attendance.attendee.lastName} + ' (' + ${attendance.attendee.index} + ')'"></td>
+                                <td>
+                                  <div th:replace="~{fragments/comments :: commentsBlock(${attendance.comments})}"></div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div th:if="${attendance.reportAbsentStudent}">
+                                        <i class="fas fa-times-circle text-danger me-1"></i>Отсутен
+                                        <p th:text="'Коментар: ' + ${attendance.absentStudentComment}" class="small text-muted mt-1"></p>
+                                    </div>
+                                    <div th:unless="${attendance.reportAbsentStudent}">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Присутен
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div th:if="${attendance.reportAbsentProfessor}">
+                                        <i class="fas fa-times-circle text-danger me-1"></i>Отсутен
+                                        <p th:text="'Коментар: ' + ${attendance.absentProfessorComment}" class="small text-muted mt-1"></p>
+                                    </div>
+                                    <div th:unless="${attendance.reportAbsentProfessor}">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Присутен
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mobile-card-view">
+            <div th:unless="${page.isEmpty()}" class="consultation-card" th:each="attendance : ${page.getContent()}">
+                <div class="card-header-custom">
+                    <h6 class="mb-1" th:text="${attendance.consultation.professor.name}"></h6>
+                    <p class="mb-0 small">
+                        <i class="fas fa-calendar me-2"></i>
+                        <span th:text="${attendance.consultation.getFormattedOneTimeDate()}+ ' (' + #{${attendance.consultation.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                    </p>
+                    <div>
+                        <span th:if="${attendance.consultation.type.name() == 'WEEKLY'}" class="badge bg-success-custom ">Редовни</span>
+                        <span th:if="${attendance.consultation.type.name() == 'ONE_TIME'}" class="badge bg-warning text-dark">Дополнителни</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card-info-row">
+                        <div class="card-info-label"><i class="fas fa-clock me-2"></i>Време</div>
+                        <div class="card-info-value" th:text="${attendance.consultation.startTime} + ' - ' + ${attendance.consultation.endTime}"></div>
+                    </div>
+                    <div class="card-info-row">
+                        <div class="card-info-label"><i class="fas fa-door-open me-2"></i>Просторија</div>
+                        <div class="card-info-value" th:text="${attendance.consultation.room.type == 'VIRTUAL' ? 'Online' : attendance.consultation.room.name}"></div>
+                    </div>
+                    <div class="card-info-row">
+                        <div class="card-info-label"><i class="fas fa-user me-2"></i>Студент</div>
+                        <div class="card-info-value" th:text="${attendance.attendee.name} + ' ' + ${attendance.attendee.lastName} + ' (' + ${attendance.attendee.index} + ')'"></div>
+                    </div>
+                    <div class="card-info-row">
+                      <div th:replace="~{fragments/comments :: commentsBlock(${attendance.comments})}"></div>
+                    </div>
+                    <div class="card-info-row">
+                        <div class="card-info-value">
+                            <div th:if="${attendance.reportAbsentStudent}">
+                                <i class="fas fa-times-circle text-danger me-1"></i>Отсутен студент
+                                <p th:text="'Коментар: ' + ${attendance.absentStudentComment}" class="small text-muted mt-1"></p>
+                            </div>
+                            <div th:unless="${attendance.reportAbsentStudent}">
+                                <i class="fas fa-check-circle text-success me-1"></i>Присутен студент
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-info-row">
+                        <div class="card-info-value">
+                            <div th:if="${attendance.reportAbsentProfessor}">
+                                <i class="fas fa-times-circle text-danger me-1"></i>Отсутен професор
+                                <p th:text="'Коментар: ' + ${attendance.absentProfessorComment}" class="small text-muted mt-1"></p>
+                            </div>
+                            <div th:unless="${attendance.reportAbsentProfessor}">
+                                <i class="fas fa-check-circle text-success me-1"></i>Присутен професор
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:insert="~{fragments/paging :: pageSection(${page})}" class="mt-4"></div>
+    </div>
+</div>
+</body>
+</html>

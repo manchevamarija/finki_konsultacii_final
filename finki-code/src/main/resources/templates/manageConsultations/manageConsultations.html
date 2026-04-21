@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.w3.org/1999/xhtml"
+      lang="en">
+<head>
+    <meta charset="UTF-8" content="no-cache">
+    <title>FINKI Consultations</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/manageConsultations.css">
+    <script th:replace="~{fragments/confirmModal :: confirmModalScript}"></script>
+</head>
+<body>
+<div class="mt-4" layout:fragment="content">
+    <div th:replace="~{fragments/confirmModal :: confirmModal}"></div>
+
+    <div class="container py-4">
+        <div th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}"
+             class="alert alert-danger d-flex align-items-center shadow-sm mb-3" role="alert">
+            <i class="fas fa-exclamation-circle me-2 fs-5"></i>
+            <span th:text="${errorMessage}" class="fw-bold"></span>
+        </div>
+        <div th:if="${successMessage != null and !#strings.isEmpty(successMessage)}"
+             class="alert alert-success d-flex align-items-center shadow-sm mb-3" role="alert">
+            <i class="fas fa-check-circle me-2 fs-5"></i>
+            <span th:text="${successMessage}" class="fw-bold"></span>
+        </div>
+
+        <div sec:authorize="hasAnyRole('ROLE_PROFESSOR', 'ROLE_ADMIN')" class="form-card mb-4">
+            <div class="section-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Поврзување со Календар
+                </h5>
+            </div>
+            <div class="p-3">
+                <p class="text-muted small mb-3">
+                    Поврзете го вашиот Outlook или Google Calendar за автоматска синхронизација на консултациите.
+                </p>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-envelope me-2 text-primary fs-5"></i>
+                                <strong>Microsoft Outlook</strong>
+                            </div>
+                            <div th:if="${outlookConnected}">
+                                <span class="badge bg-success mb-2"><i class="fas fa-check me-1"></i>Поврзан</span>
+                                <a th:href="@{/calendar/outlook/disconnect}" class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="fas fa-unlink me-1"></i>Откажи го поврзувањето
+                                </a>
+                            </div>
+                            <div th:unless="${outlookConnected}">
+                                <span class="badge bg-secondary mb-2"><i class="fas fa-times me-1"></i>Не е поврзан</span>
+                                <a th:href="@{/calendar/outlook/connect}" class="btn btn-sm btn-primary ms-2">
+                                    <i class="fab fa-microsoft me-1"></i>Поврзи Outlook
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-calendar me-2 text-danger fs-5"></i>
+                                <strong>Google Calendar</strong>
+                            </div>
+                            <div th:if="${googleConnected}">
+                                <span class="badge bg-success mb-2"><i class="fas fa-check me-1"></i>Поврзан</span>
+                                <a th:href="@{/calendar/google/disconnect}" class="btn btn-sm btn-outline-danger ms-2">
+                                    <i class="fas fa-unlink me-1"></i>Откажи го поврзувањето
+                                </a>
+                            </div>
+                            <div th:unless="${googleConnected}">
+                                <span class="badge bg-secondary mb-2"><i class="fas fa-times me-1"></i>Не е поврзан</span>
+                                <a th:href="@{/calendar/google/connect}" class="btn btn-sm btn-danger ms-2">
+                                    <i class="fab fa-google me-1"></i>Поврзи Google
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div sec:authorize="hasAnyRole('ROLE_ADMIN')" class="form-card">
+            <div class="section-header section-header-warning bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-import me-2"></i>Импортирај консултации
+                </h5>
+            </div>
+            <div class="p-4">
+                <form th:action="@{/manage-consultations/import}" method="post" enctype="multipart/form-data">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-file-csv text-primary-custom-custom me-2"></i>Избери датотека
+                            </label>
+                            <input class="form-control" type="file" name="file" id="file" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary-custom w-100" type="submit">
+                                <i class="fas fa-upload me-2"></i>Импортирај
+                            </button>
+                            <a th:href="@{/manage-consultations/sample-tsv}"
+                               class="btn btn-outline-secondary w-100 mt-2">
+                                <i class="fas fa-download me-2"></i>Преземи шаблон
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="section-header bg-light">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Закажи консултации
+                    </h5>
+                </div>
+            </div>
+            <div class="p-4">
+                <form id="consultationForm"
+                      th:action="@{/manage-consultations/{professorId}/create-consultation(professorId=${professorId})}"
+                      method="post">
+                    <input type="hidden" name="isRegular" id="isRegularField" value="true">
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-8">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag text-primary-custom me-2"></i>Тип на консултации
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="consultationType" id="typeRegular"
+                                       value="regular" checked>
+                                <label class="btn btn-outline-secondary" for="typeRegular">
+                                    <i class="fas fa-calendar-week me-2"></i>Редовни (секоја недела)
+                                </label>
+
+                                <input type="radio" class="btn-check" name="consultationType" id="typeOneTime"
+                                       value="onetime">
+                                <label class="btn btn-outline-secondary" for="typeOneTime">
+                                    <i class="fas fa-calendar-day me-2"></i>Дополнителни (еднократно)
+                                </label>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <span id="typeHintText">Се креираат консултации за целиот семестар</span>
+                            </small>
+                        </div>
+                        <div class="col-4" id="semesterGroup">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-graduation-cap text-primary-custom me-2"></i>Семестар
+                            </label>
+                            <select name="semesterCode" class="form-select" required>
+                                <option disabled selected value="">Изберете семестар</option>
+                                <option th:each="semester : ${semesters}"
+                                        th:value="${semester.code}"
+                                        th:text="${semester.year} + ' - ' + ${semester.semesterType}"
+                                        th:selected="${semester.code == currentSemester.code}"></option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4" id="dayOfWeekGroup">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-calendar-day text-primary-custom me-2"></i>Ден
+                            </label>
+                            <select name="dayOfWeek" class="form-select">
+                                <option th:each="day : ${daysOfWeek}" th:value="${day}"
+                                        th:text="#{${day.toString().toLowerCase()}}"></option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4" id="dateGroup" style="display: none;">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-calendar text-primary-custom me-2"></i>Датум
+                            </label>
+                            <input type="date" name="date" class="form-control" th:min="${minDate}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Време од
+                            </label>
+                            <input type="time" name="startTime" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Време до
+                            </label>
+                            <input type="time" name="endTime" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-door-open text-primary-custom me-2"></i>Просторија
+                            </label>
+                            <select name="roomName" class="form-select" required>
+                                <option disabled selected value="">Изберете просторија</option>
+                                <option th:each="room : ${rooms}" th:value="${room.getName()}"
+                                        th:text="${room.getName()}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="online" class="form-check-input" id="online-toggle"
+                                       style="width: 3rem; height: 1.5rem; cursor: pointer;"/>
+                                <label class="form-check-label ms-2 fw-semibold" for="online-toggle">
+                                    <i class="fas fa-wifi text-primary-custom me-1"></i>Online
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-link text-primary-custom me-2"></i>Линк
+                            </label>
+                            <input type="text" name="meetingLink" class="form-control"
+                                   placeholder="Линк за онлајн консултации (опционално)" maxlength="2000">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clipboard-list text-primary-custom me-2"></i>Инструкции
+                            </label>
+                            <textarea name="studentInstructions" class="form-control"
+                                      placeholder="Инструкции за студентите..." maxlength="1000" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary-custom btn-md px-4">
+                            <span id="submitButtonText">Закажи редовни консултации</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="section-header bg-light">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>Сите консултации
+                    </h5>
+                </div>
+                <i class="fas fa-info-circle info-icon" data-bs-toggle="tooltip" data-bs-placement="left"
+                   title="Студентите можат да се пријават на термин најмалку 2 часа пред почетокот на истиот."></i>
+            </div>
+            <div class="p-4">
+                <form id="consultationFilterForm"
+                      th:action="@{/manage-consultations/{professorId}(professorId=${professorId})}"
+                      method="get">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-tag text-primary-custom me-2"></i>Тип
+                            </label>
+                            <select class="form-select" name="type">
+                                <option value="">Сите типови</option>
+                                <option value="WEEKLY" th:selected="${param.type!=null && 'WEEKLY' == param.type[0]}">
+                                    Редовни
+                                </option>
+                                <option value="ONE_TIME"
+                                        th:selected="${param.type!=null && 'ONE_TIME' == param.type[0]}">Дополнителни
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-clock text-primary-custom me-2"></i>Период
+                            </label>
+                            <select class="form-select" name="time">
+                                <option value="ALL">Сите</option>
+                                <option value="PAST" th:selected="${param.time!=null && 'PAST' == param.time[0]}">
+                                    Завршени
+                                </option>
+                                <option value="UPCOMING"
+                                        th:selected="${param.time!=null && 'UPCOMING' == param.time[0]}">Идни
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-toggle-on text-primary-custom me-2"></i>Статус
+                            </label>
+                            <select class="form-select" name="status">
+                                <option value="">Сите</option>
+                                <option value="ACTIVE"
+                                        th:selected="${param.status!=null && 'ACTIVE' == param.status[0]}">Активни
+                                </option>
+                                <option value="INACTIVE"
+                                        th:selected="${param.status!=null && 'INACTIVE' == param.status[0]}">Исклучени
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary-custom w-100">
+                                <i class="fas fa-filter me-2"></i>Филтрирај
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive desktop-table">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th><i class="fas fa-calendar me-2"></i>Ден</th>
+                            <th><i class="fas fa-clock me-2"></i>Време</th>
+                            <th><i class="fas fa-door-open me-2"></i>Просторија</th>
+                            <th><i class="fas fa-users me-2"></i>Студенти</th>
+                            <th><i class="fas fa-tag me-2"></i>Тип</th>
+                            <th>
+                                <i class="fas fa-toggle-on me-2"></i>Статус
+                                <i class="fas fa-info-circle ms-1" data-bs-toggle="tooltip"
+                                   title="Може да го користите прекинувачот за да го откажете/активирате конкретниот термин за консултации."></i>
+                            </th>
+                            <th><i class="fas fa-cog me-2"></i>Акции</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${page.getContent()}">
+                            <td th:text="${c.getFormattedOneTimeDate()} + ' (' + #{${c.getDayOfWeek().toString().toLowerCase()}} + ')'"></td>
+                            <td th:text="${c.getStartTime()}+ ' - ' + ${c.getEndTime()}"></td>
+                            <td>
+                                <span th:text="${c.getRoom()?.getName()}"></span>
+                                <span th:if="${c.online}"> и Online</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-custom badge-custom">
+                                    <i class="fas fa-user-check me-1"></i>
+                                    <span th:text="${c.attendanceCount}">0</span>
+                                </span>
+                            </td>
+                            <td>
+                                <span th:if="${c.getType().toString() == 'WEEKLY'}"
+                                      class="badge bg-success-custom badge-custom">
+                                    <span th:text="${c.getTranslatedType()}"></span>
+                                </span>
+                                <span th:if="${c.getType().toString() == 'ONE_TIME'}"
+                                      class="badge bg-warning-custom text-dark badge-custom">
+                                    <span th:text="${c.getTranslatedType()}"></span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <form th:if="${c.isEnded() != true}"
+                                      th:action="@{'/manage-consultations/' + ${professorId} + '/toggle-status/' + ${c.id}}"
+                                      method="post"
+                                      onsubmit="return confirm('Дали сте сигурни дека сакате да го промените статусот?');">
+                                    <input type="hidden" name="consultationId" th:value="${c.id}"/>
+                                    <label class="switch">
+                                        <input type="checkbox" onchange="this.form.submit()"
+                                               th:checked="${c.isActive()}"/>
+                                        <span class="slider"></span>
+                                    </label>
+                                </form>
+                                <span th:if="${c.isEnded() == true}" class="badge bg-secondary badge-custom">
+                                    <span th:text="${c.getStatus().toString()}"></span>
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <form th:action="@{'/manage-consultations/' + ${professorId} + '/consultation-details/' + ${c.id}}"
+                                          method="get">
+                                        <button class="action-btn" type="submit" title="Прикажи повеќе">
+                                            <i class="fas fa-info-circle" style="font-size: 20px; color: #578ABD;"></i>
+                                        </button>
+                                    </form>
+                                    <form th:if="${c.isEnded() != true}"
+                                          th:action="@{'/manage-consultations/' + ${professorId} + '/edit-consultation/' + ${c.id}}"
+                                          method="get">
+                                        <button class="action-btn" type="submit" title="Промени">
+                                            <i class="fas fa-pen-to-square" style="font-size: 20px; color: #f8f363;"></i>
+                                        </button>
+                                    </form>
+
+                                    <form th:if="${c.attendanceCount == 0 && c.isEnded() != true && c.getType().toString() == 'WEEKLY'}"
+                                          th:action="@{'/manage-consultations/'+ ${professorId} +'/delete-all-upcoming/'+ ${c.id}}"
+                                          method="post"
+                                          onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да ги избришете сите идни консултации за овој термин?', 'btn-success')">
+                                        <button type="submit" class="action-btn" title="Избриши сите наредни">
+                                            <i class="fas fa-trash-alt" style="font-size: 20px; color: #ea5968;"></i>
+                                        </button>
+                                    </form>
+
+                                    <form th:if="${c.attendanceCount == 0 && c.isEnded() != true && c.getType().toString() == 'ONE_TIME'}"
+                                          th:action="@{'/manage-consultations/' + ${professorId} + '/delete-one-time/' + ${c.id}}"
+                                          method="post"
+                                          onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да ја избришете оваа дополнителна консултација?', 'btn-success')">
+                                        <button type="submit" class="action-btn" title="Избриши дополнителна консултација">
+                                            <i class="fas fa-trash-alt" style="font-size: 20px; color: #ea5968;"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:each="c : ${page.getContent()}" class="consultation-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-calendar me-2 text-primary-custom"></i>
+                                <span th:text="${c.getFormattedOneTimeDate()} + ' (' + #{${c.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                            </h6>
+                            <p class="mb-0 text-muted">
+                                <i class="fas fa-clock me-2"></i>
+                                <span th:text="${c.getStartTime()}+ ' - ' + ${c.getEndTime()}"></span>
+                            </p>
+                        </div>
+                        <div>
+                            <span th:if="${c.getType().toString() == 'WEEKLY'}" class="badge bg-success-custom">
+                                <span th:text="${c.getTranslatedType()}"></span>
+                            </span>
+                            <span th:if="${c.getType().toString() == 'ONE_TIME'}"
+                                  class="badge bg-warning-custom text-dark">
+                                <span th:text="${c.getTranslatedType()}"></span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <small class="text-muted"><i class="fas fa-door-open me-2"></i>Просторија:</small>
+                        <span th:text="${c.getRoom()?.getName()}"></span>
+                        <span th:if="${c.online}"> и Online</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <small class="text-muted"><i class="fas fa-users me-2"></i>Пријавени:</small>
+                        <span class="badge bg-primary-custom ms-1" th:text="${c.attendanceCount}">0</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center border-top pt-3">
+                        <div>
+                            <form th:if="${c.isEnded() != true}"
+                                  th:action="@{'/manage-consultations/' + ${professorId} + '/toggle-status/' + ${c.id}}"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Дали сте сигурни дека сакате да го промените статусот?');">
+                                <input type="hidden" name="consultationId" th:value="${c.id}"/>
+                                <label class="switch">
+                                    <input type="checkbox" onchange="this.form.submit()" th:checked="${c.isActive()}"/>
+                                    <span class="slider"></span>
+                                </label>
+                            </form>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <form th:action="@{'/manage-consultations/' + ${professorId} + '/consultation-details/' + ${c.id}}"
+                                  method="get">
+                                <button class="btn btn-sm btn-primary-custom" type="submit">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </form>
+                            <form th:if="${c.isEnded() != true}"
+                                  th:action="@{'/manage-consultations/' + ${professorId} + '/edit-consultation/' + ${c.id}}"
+                                  method="get">
+                                <button class="btn btn-sm btn-warning-custom" type="submit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </form>
+
+                            <form th:if="${c.attendanceCount == 0 && c.isEnded() != true && c.getType().toString() == 'WEEKLY'}"
+                                  th:action="@{'/manage-consultations/'+ ${professorId} +'/delete-all-upcoming/'+ ${c.id}}"
+                                  method="post"
+                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да ги избришете сите идни консултации за овој термин?', 'btn-success')">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+
+                            <form th:if="${c.attendanceCount == 0 && c.isEnded() != true && c.getType().toString() == 'ONE_TIME'}"
+                                  th:action="@{'/manage-consultations/' + ${professorId} + '/delete-one-time/' + ${c.id}}"
+                                  method="post"
+                                  onsubmit="return confirmAction(this, 'Дали сте сигурни дека сакате да ја избришете оваа дополнителна консултација?', 'btn-success')">
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:insert="~{fragments/paging :: pageSection(${page})}" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            const typeRegular = document.getElementById('typeRegular');
+            const typeOneTime = document.getElementById('typeOneTime');
+            const dayOfWeekGroup = document.getElementById('dayOfWeekGroup');
+            const dateGroup = document.getElementById('dateGroup');
+            const semesterGroup = document.getElementById('semesterGroup');
+            const submitButtonText = document.getElementById('submitButtonText');
+            const typeHintText = document.getElementById('typeHintText');
+            const dayOfWeekSelect = document.querySelector('select[name="dayOfWeek"]');
+            const dateInput = document.querySelector('input[name="date"]');
+            const isRegularField = document.getElementById('isRegularField');
+            const consultationForm = document.getElementById('consultationForm');
+            const submitButton = consultationForm ? consultationForm.querySelector('button[type="submit"]') : null;
+
+            const AUTO_REFRESH_MS = 30 * 60 * 1000; // 30 минути
+            let lastRefreshAt = Date.now();
+
+            function updateFormFields() {
+                if (typeRegular.checked) {
+                    isRegularField.value = 'true';
+                    dayOfWeekGroup.style.display = 'block';
+                    dateGroup.style.display = 'none';
+                    semesterGroup.style.display = 'block';
+                    submitButtonText.textContent = 'Закажи редовни консултации';
+                    typeHintText.textContent = 'Се креираат консултации за целиот тековен семестар';
+                    dayOfWeekSelect.required = true;
+                    dateInput.required = false;
+                } else {
+                    isRegularField.value = 'false';
+                    dayOfWeekGroup.style.display = 'none';
+                    dateGroup.style.display = 'block';
+                    semesterGroup.style.display = 'none';
+                    submitButtonText.textContent = 'Закажи дополнителни консултации';
+                    typeHintText.textContent = 'Се креира само еден термин';
+                    dayOfWeekSelect.required = false;
+                    dateInput.required = true;
+                }
+            }
+
+            function shouldAutoRefresh() {
+                const params = new URLSearchParams(window.location.search);
+                const currentStatus = params.get('status');
+                const currentTime = params.get('time');
+
+                const activeElement = document.activeElement;
+                const typingInCreateForm = activeElement && activeElement.closest('#consultationForm');
+                const typingInFilterForm = activeElement && activeElement.closest('#consultationFilterForm');
+                const modalOpen = document.querySelector('.modal.show');
+
+                const desktopRows = document.querySelectorAll('.desktop-table tbody tr');
+                const mobileCards = document.querySelectorAll('.consultation-card');
+                const hasConsultations = desktopRows.length > 0 || mobileCards.length > 0;
+
+                const shouldTrackChanges =
+                    currentStatus === 'ACTIVE' ||
+                    currentTime === 'UPCOMING' ||
+                    (currentStatus === null && (currentTime === null || currentTime === 'UPCOMING'));
+
+                if (!hasConsultations) return false;
+                if (!shouldTrackChanges) return false;
+                if (document.visibilityState !== 'visible') return false;
+                if (typingInCreateForm || typingInFilterForm) return false;
+                if (modalOpen) return false;
+
+                return true;
+            }
+
+            function safeReload() {
+                if (!shouldAutoRefresh()) return;
+
+                const now = Date.now();
+                if (now - lastRefreshAt < AUTO_REFRESH_MS - 1000) return;
+
+                lastRefreshAt = now;
+                window.location.reload();
+            }
+
+            typeRegular.addEventListener('change', updateFormFields);
+            typeOneTime.addEventListener('change', updateFormFields);
+            updateFormFields();
+
+            if (consultationForm && submitButton) {
+                consultationForm.addEventListener('submit', function () {
+                    submitButton.disabled = true;
+                    submitButtonText.textContent = 'Се закажува...';
+                });
+            }
+
+            setInterval(safeReload, AUTO_REFRESH_MS);
+        });
+    </script>
+</div>
+</body>
+</html>

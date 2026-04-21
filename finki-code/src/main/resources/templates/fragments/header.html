@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .offcanvas-end {
+            max-width: 250px;
+        }
+
+        .navbar-nav {
+            text-align: left;
+        }
+
+        @media (min-width: 992px) {
+            #headerpdf .col-auto {
+                margin-left: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<header th:fragment="header" class="bg-dark text-white" id="headerpdf">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col">
+                <a href="/consultations" class="text-white text-decoration-none">
+                    <img src="/images/FINKI-logo.png" alt="" id="logo-image">
+                </a>
+            </div>
+
+            <div class="col-auto">
+                <nav class="navbar navbar-expand-lg navbar-dark">
+                    <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="offcanvas offcanvas-end bg-dark text-white" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                        <div class="offcanvas-header">
+                            <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Навигација</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                        </div>
+                        <div class="offcanvas-body">
+                            <ul class="navbar-nav justify-content-start">
+                                <th:block th:if="${#authentication.getPrincipal() == 'anonymousUser'}">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/consultations">Најави се</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <li class="nav-item">
+                                        <a class="nav-link" th:text="${#authentication.name}" href="#"></a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/consultations">Консултации</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_PROFESSOR', 'ROLE_ADMIN')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" th:href="@{/manage-consultations/{username}(username=${#authentication.name})}">Мои Консултации</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_PROFESSOR', 'ROLE_ADMIN')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/professor-attendances">Пријавени студенти</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_ADMIN')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/admin-attendances">Сите пријавени студенти</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_ADMIN')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/reports/weekly">Извештај по недела</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_ADMIN')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/reports/semester">Извештај по семестар</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="hasAnyRole('ROLE_STUDENT')">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="/student-attendances">Мои пријавени консултации</a>
+                                    </li>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <li class="nav-item">
+                                        <a class="nav-link text-warning" href="/logout-basic">Одјави се</a>
+                                    </li>
+                                </th:block>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+</header>
+</body>
+</html>

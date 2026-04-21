@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="mk"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}"
+      xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>FINKI Consultations</title>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+
+        h2 {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .filter-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .filter-card .form-control,
+        .filter-card .select2 {
+            border-radius: 8px;
+        }
+
+        .info-text {
+            background: #eef6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+
+        .table {
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table th, .table td {
+            vertical-align: middle;
+            text-align: left;
+        }
+
+        .table thead {
+            background-color: #1e3a8a;
+            color: #fff;
+        }
+
+        .table tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tr:hover {
+            background-color: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        textarea {
+            border-radius: 8px !important;
+        }
+
+        .btn {
+            border-radius: 8px;
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+
+        .term-header {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            border-left: 4px solid #578ABD;
+        }
+
+        .cancelled {
+            color: #b91c1c;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .table {
+                font-size: 0.9rem;
+            }
+            .filter-card form .row > div {
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container my-4">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-user-tie fs-3 me-3 text-primary-custom"></i>
+            <h2>Пријавени студенти за консултации кај <span class="text-primary-custom" th:text="${professorUsername}"></span></h2>
+        </div>
+
+        <div class="filter-card mb-4">
+            <form th:action="@{/professor-attendances}" method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-tag text-primary-custom me-2"></i>Тип</label>
+                        <select class="form-select" name="type">
+                            <option value="">Сите типови</option>
+                            <option value="WEEKLY" th:selected="${param.type!=null && 'WEEKLY' == param.type[0]}">Редовни</option>
+                            <option value="ONE_TIME" th:selected="${param.type!=null && 'ONE_TIME' == param.type[0]}">Дополнителни</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-clock text-primary-custom me-2"></i>Временски период</label>
+                        <select class="form-select" name="time">
+                            <option value="ALL">Сите</option>
+                            <option value="PAST" th:selected="${param.time!=null && 'PAST' == param.time[0]}">Завршени</option>
+                            <option value="UPCOMING" th:selected="${param.time!=null && 'UPCOMING' == param.time[0]}">Идни</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-check-circle text-primary-custom me-2"></i>Статус</label>
+                        <select class="form-select" name="status">
+                            <option value="">Сите</option>
+                            <option value="ACTIVE" th:selected="${param.status!=null && 'ACTIVE' == param.status[0]}">Активни</option>
+                            <option value="INACTIVE" th:selected="${param.status!=null && 'INACTIVE' == param.status[0]}">Откажани</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-id-card text-primary-custom me-2"></i>Индекс</label>
+                        <input type="text" class="form-control" name="studentIndex"
+                               placeholder="Пребарувај по индекс" th:value="${param.studentIndex}">
+                    </div>
+
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary-custom mt-2">
+                            <i class="fas fa-search me-2"></i>Филтрирај
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div>
+            <div th:if="${groupedAttendances.isEmpty()}" class="mt-4 table-responsive shadow">
+                <div class="p-4 text-center text-muted">
+                    <i class="fas fa-user-slash fa-2x mb-2"></i>
+                    <p class="mb-0">Нема пронајдени резултати.</p>
+                </div>
+            </div>
+        </div>
+
+
+        <div th:if="${!groupedAttendances.isEmpty()}" class="mt-4 table-responsive shadow">
+            <table class="table align-middle">
+                <thead>
+                </thead>
+                <tbody>
+                <th:block th:each="entry : ${groupedAttendances}">
+                    <tr class="table-secondary">
+                        <td colspan="7" class="term-header p-3">
+                            <i class="fas fa-calendar-day me-1 text-secondary"></i>
+                            <span th:text="'Термин: ' + ${#temporals.format(entry.key.oneTimeDate, 'dd.MM.yyyy')} +
+                                          ' (' + #{${entry.key.getDayOfWeek().toString().toLowerCase()}} + ')'"></span>
+                            <i class="fas fa-clock mx-2 text-secondary"></i>
+                            <span th:text="${entry.key.startTime} + ' - ' + ${entry.key.endTime}"></span>
+                            <i class="fas fa-tag mx-2 text-secondary"></i>
+                            <span th:text="${entry.key.getTranslatedType()}"></span>
+                            <i class="fas fa-location-dot mx-2 text-secondary"></i>
+                            <span th:text="${entry.key.room.name}"></span>
+                            <span th:if="${entry.key.online != null and entry.key.online}">и Онлајн</span>
+                        </td>
+                    </tr>
+
+                    <tr th:unless="${entry.key.isEnded()}">
+                        <td colspan="7">
+                            <form action="/professor-attendances/add-comment-all" method="post">
+
+                                <input type="hidden" name="consultationId" th:value="${entry.key.id}"/>
+
+                                <textarea name="newComment" class="form-control mt-2" placeholder="Коментар..." maxlength="500" rows="2"></textarea>
+                                <button type="submit" class="btn btn-primary-custom mt-2 btn-sm">
+                                    <i class="fas fa-comment-dots me-2"></i>Додај коментар на сите студенти
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Студент</th>
+                        <th>Коментар</th>
+                        <th>Акции</th>
+                    </tr>
+
+                    <tr th:each="attendance : ${entry.value}">
+                        <td th:text="${attendance.attendee.name} + ' ' + ${attendance.attendee.lastName} + ' (' + ${attendance.attendee.index} + ')'"></td>
+                        <td>
+                            <div th:replace="~{fragments/comments :: commentsBlock(${attendance.comments})}"></div>
+                        </td>
+                        <td>
+                            <div th:if="${attendance.consultation.isEnded() and attendance.consultation.isActive()}">
+                                <div th:if="${attendance.reportAbsentStudent}">
+                                    <p class="mb-0">
+                                        <i class="text-danger fas fa-user-slash me-2"></i>Студентот беше отсутен <br>
+                                        <span th:text="'Коментар: ' + ${attendance.absentStudentComment}"></span>
+                                    </p>
+                                </div>
+                                <div th:unless="${attendance.reportAbsentStudent}">
+                                    <form th:action="@{/professor-attendances/report-absent-student}" method="post">
+
+                                        <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="reportAbsentStudent" id="reportAbsentStudent{attendance.id}">
+                                            <label class="form-check-label" for="reportAbsentStudent{attendance.id}">
+                                                Студентот беше отсутен
+                                            </label>
+                                        </div>
+
+                                        <textarea class="form-control mt-2" name="absentStudentComment"
+                                                  placeholder="Остави коментар..." rows="2"></textarea>
+                                        <button type="submit" class="btn btn-danger mt-2 btn-sm">
+                                            <i class="fas fa-user-times me-2"></i>Пријави отсутен студент
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div th:if="${!attendance.consultation.isEnded()}">
+                                <form action="/consultations/add-comment" method="post">
+
+                                    <input type="hidden" name="attendanceId" th:value="${attendance.id}"/>
+                                    <input type="hidden" name="professorId" th:value="${professorUsername}"/>
+                                    <input type="hidden" name="consultationId" th:value="${attendance.consultation.id}"/>
+                                    <textarea required name="newComment" class="form-control mt-2" placeholder="Коментар..." maxlength="500" rows="2"></textarea>
+                                    <button type="submit" class="btn btn-primary-custom mt-2 btn-sm">
+                                        <i class="fas fa-comment me-2"></i>Додај
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div th:if="${!attendance.consultation.isActive() and attendance.consultation != null}" class="cancelled">
+                                <i class="fas fa-ban me-2"></i>Консултациите се откажани.
+                            </div>
+                        </td>
+                    </tr>
+                </th:block>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:insert="~{fragments/paging :: pageSection(${page})}" class="mt-4 mb-4"></div>
+    </div>
+</div>
+</body>
+</html>
